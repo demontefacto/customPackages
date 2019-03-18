@@ -1,0 +1,55 @@
+#!/bin/bash /etc/rc.common
+
+START=90
+STOP=10
+
+INITTAB=/etc/rc.vtund
+PROGVPN=/usr/sbin/vtund
+PROGCVPN=/etc/ppp/checkvpn.sh
+CONFIG=/etc/vtund.conf
+REGEX='^[^#]'
+
+USE_PROCD=1
+
+vtund_add_instance() {
+        local host="$1"
+        local target="$2"
+
+        procd_open_instance
+        procd_set_param command "$PROGVPN" \
+                "-n" \
+                "$host" \
+                "$target"
+        procd_set_param respawn ${respawn_retry:-0} ${respawn_threshold:60} ${respawn_timeout:-10}
+        procd_set_param file $CONFIG
+        procd_close_instance
+}
+checkvpn_add_instance() {
+	local IP="$1"
+	local DEV="$2"
+
+	procd_open_instance
+	procd_set_param command "$PROGCVPN" \
+		"$DEV" \
+		"$IP"
+	procd_close_instance
+}
+
+start_service() {
+        while read instance ; do
+                if [[ "$instance" =~ $REGEX ]] ; then
+                        HOST=`echo $instance|cut -f 1 -d " "`;
+                        TARGET=`echo $instance|cut -f 2 -d " "`;
+			CIP=`echo $instance|cut -f 3 -d " "`;
+			CDEV=`echo $instance|cut -f 4 -d " "`;
+                        echo "Spoustim vtund klienta $HOST na $TARGET.";
+                        vtund_add_instance "$HOST" "$TARGET"
+			if [[ "$CIP" == "" || "$CDEV" == "" ]] ; then
+				echo "$HOST Bez CheckVPN"
+			else
+				checkvpn_add_instance "$CIP" "$CDEV"
+				echo "CheckVPN pro $HOST -> $CIP, $CDEV"
+			fi
+                fi
+        done < /etc/rc.vtund
+}
