@@ -1,0 +1,26 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006-2011 OpenWrt.org
+
+#skript se vyuziva pouze pro generovani klicu.
+
+START=50
+STOP=50
+
+USE_PROCD=1
+PROG=/usr/sbin/sshd
+
+start_service() {
+	for type in dsa rsa ecdsa ed25519; do
+		# check for keys
+		key=/etc/ssh/ssh_host_${type}_key
+		[ ! -f $key ] && {
+			# generate missing keys
+			[ -x /usr/bin/ssh-keygen ] && {
+				/usr/bin/ssh-keygen -N '' -t $type -f $key 2>&- >&-
+			}
+		}
+	done
+	mkdir -m 0700 -p /var/empty
+	touch /var/run/utmp
+	/usr/sbin/sshd -E /var/log/lastlog
+} 
