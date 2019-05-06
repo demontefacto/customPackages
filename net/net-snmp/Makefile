@@ -263,21 +263,21 @@ define Package/snmpd/conffiles
 endef
 
 define Package/snmpd/install
-        $(INSTALL_DIR) $(1)/etc/snmpd
-        $(INSTALL_DATA) ./files/snmpd.conf $(1)/etc/snmpd/snmpd.conf
-        $(INSTALL_DIR) $(1)/etc/init.d
-        $(INSTALL_BIN) ./files/snmpd.init $(1)/etc/init.d/snmpd
-        $(INSTALL_DIR) $(1)/usr/sbin
-        $(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/snmpd $(1)/usr/sbin/snmpd
+	$(INSTALL_DIR) $(1)/etc/snmpd
+	$(INSTALL_DATA) ./files/snmpd.conf $(1)/etc/snmpd/snmpd.conf
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/snmpd.init $(1)/etc/init.d/snmpd
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/snmpd $(1)/usr/sbin/snmpd
 endef
 
 define Package/snmptrapd/install
-        $(INSTALL_DIR) $(1)/etc/init.d
-        $(INSTALL_BIN) ./files/snmptrapd.init $(1)/etc/init.d/snmptrapd
-        $(INSTALL_DIR) $(1)/usr/lib 
-        $(CP) $(PKG_INSTALL_DIR)/usr/lib/libnetsnmptrapd.so.* $(1)/usr/lib/ 
-        $(INSTALL_DIR) $(1)/usr/sbin
-        $(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/snmptrapd $(1)/usr/sbin/
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/snmptrapd.init $(1)/etc/init.d/snmptrapd
+	$(INSTALL_DIR) $(1)/usr/lib 
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libnetsnmptrapd.so.* $(1)/usr/lib/ 
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/snmptrapd $(1)/usr/sbin/
 endef
 
 $(eval $(call BuildPackage,libnetsnmp))
