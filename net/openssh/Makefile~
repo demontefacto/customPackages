@@ -15,7 +15,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/ \
 		https://ftp.spline.de/pub/OpenBSD/OpenSSH/portable/ \
 		https://anorien.csc.warwick.ac.uk/pub/OpenBSD/OpenSSH/portable/
-PKG_HASH:=d73be7e684e99efcd024be15a30bffcbe41b012b2f7b3c9084aed621775e6b8f
+PKG_HASH:=9846e3c5fab9f0547400b4d2c017992f914222b3fd1f8eee6c7dc6bc5e59f9f0
 
 PKG_LICENSE:=BSD ISC
 PKG_LICENSE_FILES:=LICENCE
