@@ -1,0 +1,42 @@
+--- a/rarp.c
++++ b/rarp.c
+@@ -225,7 +225,7 @@ int main(int argc, char **argv)
+ 	case 'h':
+ 	    usage();
+ 	case 'V':
+-	    fprintf(stderr, version_string);
++	    fprintf(stderr, "%s\n", version_string);
+ 	    exit(E_VERSION);
+ 	    break;
+ 	case 'v':
+--- a/slattach.c
++++ b/slattach.c
+@@ -566,7 +566,7 @@ usage(void)
+ 	  "[-c cmd] [-s speed] [-p protocol] tty | -\n"
+ 	  "       slattach -V | --version\n";
+ 
+-  fprintf(stderr, usage_msg);
++  fprintf(stderr, "%s\n", usage_msg);
+   exit(1);
+ }
+ 
+--- a/mii-tool.c
++++ b/mii-tool.c
+@@ -237,7 +237,7 @@ int show_basic_mii(int sock, int phy_id)
+ 
+     if (opt_watch) {
+ 	if (opt_log) {
+-	    syslog(LOG_INFO, buf);
++	    syslog(LOG_INFO, "%s\n", buf);
+ 	} else {
+ 	    char s[20];
+ 	    time_t t = time(NULL);
+@@ -414,7 +414,7 @@ int main(int argc, char **argv)
+     }
+ 
+     if (opt_version)
+-	printf(version);
++	printf("%s\n", version);
+ 
+     /* Open a basic socket. */
+     if ((skfd = socket(AF_INET, SOCK_DGRAM,0)) < 0) {
