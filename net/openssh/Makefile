@@ -8,22 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openssh
-PKG_VERSION:=7.7p1
+PKG_VERSION:=8.1p1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/ \
 		https://ftp.spline.de/pub/OpenBSD/OpenSSH/portable/ \
 		https://anorien.csc.warwick.ac.uk/pub/OpenBSD/OpenSSH/portable/
-PKG_HASH:=d73be7e684e99efcd024be15a30bffcbe41b012b2f7b3c9084aed621775e6b8f
+PKG_HASH:=02f5dbef3835d0753556f973cd57b4c19b6b1f6cd24c03445e23ac77ca1b93ff
 
 PKG_LICENSE:=BSD ISC
 PKG_LICENSE_FILES:=LICENCE
+PKG_CPE_ID:=cpe:/a:openssh:openssh
 
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
-
-PKG_BUILD_DEPENDS:=libopenssl
+PKG_REMOVE_FILES:=
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -51,6 +49,10 @@ endef
 define Package/openssh-client
 	$(call Package/openssh/Default)
 	TITLE+= client
+	ALTERNATIVES:=\
+		200:/usr/bin/ssh:/usr/bin/openssh-ssh \
+		200:/usr/bin/scp:/usr/bin/openssh-scp \
+
 endef
 
 define Package/openssh-client/description
@@ -82,7 +84,7 @@ endef
 
 define Package/openssh-server
 	$(call Package/openssh/Default)
-	DEPENDS+= +openssh-keygen +libwrap
+	DEPENDS+= +openssh-keygen
 	TITLE+= server
 	USERID:=sshd=22:sshd=22
 endef
@@ -127,8 +129,6 @@ endef
 define Package/openssh-sftp-server
 	$(call Package/openssh/Default)
 	TITLE+= SFTP server
-	# Strip dependencies to avoid pulling in OpenSSL etc.
-	DEPENDS:= +libwrap
 endef
 
 define Package/openssh-sftp-server/description
@@ -138,7 +138,7 @@ endef
 define Package/openssh-sftp-avahi-service
 	$(call Package/openssh/Default)
 	TITLE+= (SFTP Avahi service)
-	DEPENDS:=+openssh-sftp-server +avahi-daemon +libwrap
+	DEPENDS:=+openssh-sftp-server +avahi-daemon
 endef
 
 define Package/openssh-sftp-avahi-service/description
@@ -157,18 +157,18 @@ CONFIGURE_ARGS+= \
 	--with-privsep-path=/var/empty \
 	--enable-shared \
 	--disable-static \
-	--enable-debug \
+	--disable-debug \
 	--disable-strip \
 	--disable-etc-default-login \
-	--enable-lastlog \
+	--disable-lastlog \
 	--disable-utmp \
 	--disable-utmpx \
-	--enable-wtmp \
+	--disable-wtmp \
 	--disable-wtmpx \
 	--without-bsd-auth \
 	--without-kerberos5 \
 	--without-x \
-	--with-tcp-wrappers
+	--with-tcp-wrapper
 
 ifeq ($(BUILD_VARIANT),with-pam)
 CONFIGURE_ARGS += \
@@ -178,7 +178,7 @@ CONFIGURE_ARGS += \
 	--without-pam
 endif
 
-ifeq ($(CONFIG_OPENSSL_ENGINE_CRYPTO),y)
+ifeq ($(CONFIG_OPENSSL_ENGINE),y)
 CONFIGURE_ARGS+= \
 	--with-ssl-engine
 endif
@@ -194,35 +194,11 @@ ifeq ($(BUILD_VARIANT),with-pam)
 TARGET_LDFLAGS += -lpthread
 endif
 
-TARGET_LDFLAGS += -lwrap
-
 define Build/Compile
-	$(MAKE) -C $(PKG_BUILD_DIR) \
-		DESTDIR="$(PKG_INSTALL_DIR)" \
-		LIBS="" \
-		sftp-server
 	$(MAKE) -C $(PKG_BUILD_DIR) \
 		DESTDIR="$(PKG_INSTALL_DIR)" \
 		STRIP_OPT="" \
 		all install
-endef
-
-define Package/openssh-client/preinst
-#!/bin/sh
-if [ -L $${IPKG_INSTROOT}/usr/bin/ssh ] && [ -L $${IPKG_INSTROOT}/usr/bin/scp ]; then
-	rm -f $${IPKG_INSTROOT}/usr/bin/ssh $${IPKG_INSTROOT}/usr/bin/scp;
-fi
-exit 0
-endef
-
-define Package/openssh-client/postrm
-#!/bin/sh
-rm -f $${IPKG_INSTROOT}/usr/bin/ssh $${IPKG_INSTROOT}/usr/bin/scp;
-if [ -x $${IPKG_INSTROOT}/usr/sbin/dropbear ] ; then
-	ln -s /usr/sbin/dropbear $${IPKG_INSTROOT}/usr/bin/ssh;
-	ln -s /usr/sbin/dropbear $${IPKG_INSTROOT}/usr/bin/scp;
-fi
-exit 0
 endef
 
 define Package/openssh-moduli/install
@@ -235,8 +211,8 @@ define Package/openssh-client/install
 	chmod 0700 $(1)/etc/ssh
 	$(CP) $(PKG_INSTALL_DIR)/etc/ssh/ssh_config $(1)/etc/ssh/
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ssh $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/scp $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ssh $(1)/usr/bin/openssh-ssh
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/scp $(1)/usr/bin/openssh-scp
 endef
 
 define Package/openssh-client-utils/install
