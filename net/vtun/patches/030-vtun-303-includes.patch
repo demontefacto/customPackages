@@ -1,0 +1,62 @@
+Index: vtun-3.0.3/lfd_encrypt.c
+===================================================================
+--- vtun-3.0.3.orig/lfd_encrypt.c
++++ vtun-3.0.3/lfd_encrypt.c
+@@ -44,6 +44,7 @@
+ #include <strings.h>
+ #include <string.h>
+ #include <time.h>
++#include <arpa/inet.h> /* htonl() */
+ 
+ #include "vtun.h"
+ #include "linkfd.h"
+Index: vtun-3.0.3/lib.c
+===================================================================
+--- vtun-3.0.3.orig/lib.c
++++ vtun-3.0.3/lib.c
+@@ -34,6 +34,7 @@
+ #include <sys/wait.h>
+ #include <syslog.h>
+ #include <errno.h>
++#include <time.h> /* nanosleep() */
+ 
+ #include "vtun.h"
+ #include "linkfd.h"
+Index: vtun-3.0.3/lib.h
+===================================================================
+--- vtun-3.0.3.orig/lib.h
++++ vtun-3.0.3/lib.h
+@@ -26,6 +26,7 @@
+ #include <sys/types.h>
+ #include <signal.h>
+ #include <errno.h>
++#include <unistd.h> /* read(), write() */
+ 
+ #ifdef HAVE_LIBUTIL_H
+ #include <libutil.h>
+Index: vtun-3.0.3/lock.c
+===================================================================
+--- vtun-3.0.3.orig/lock.c
++++ vtun-3.0.3/lock.c
+@@ -32,6 +32,7 @@
+ #include <sys/types.h>
+ #include <signal.h>
+ #include <errno.h>
++#include <time.h> /* nanosleep() */
+ 
+ #include "vtun.h"
+ #include "linkfd.h"
+Index: vtun-3.0.3/vtun.h
+===================================================================
+--- vtun-3.0.3.orig/vtun.h
++++ vtun-3.0.3/vtun.h
+@@ -232,5 +232,9 @@ int  tunnel(struct vtun_host *host);
+ int  read_config(char *file);
+ struct vtun_host * find_host(char *host);
+ inline void clear_nat_hack_flags(int svr);
++int send_msg(int len, char *in, char **out);
++int send_ib_mesg(int *len, char **in);
++int recv_msg(int len, char *in, char **out);
++int recv_ib_mesg(int *len, char **in);
+ 
+ #endif

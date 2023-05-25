@@ -1,0 +1,154 @@
+#!/bin/sh
+
+PATH=$PATH:/usr/local/sbin:/usr/local/bin:/sbin:/bin
+echo 10 > /proc/sys/kernel/panic
+echo 1 > /proc/sys/net/ipv4/ip_no_pmtu_disc
+echo 1 > /proc/sys/net/ipv4/conf/default/arp_filter
+sh /etc/rc.firstboot
+/etc/rc.rename
+
+#/etc/tcp_tunning
+
+#CPU            : ZBT
+#RAM            :
+#HDD            :
+#ONBOARD ETHER  :5
+#NAINSTALOVAL   :Sindelar Marek
+#DATUM          :26.1.2018
+
+#nakonfiguroval : Milan Kocvara 26.1.2018, Petr Janko 30.10.2022 ( nastaveni kapacit 14/8/8 + predelani vsech tunelu z vtund na l2tp )
+#zprovoznil     : , Dalibor Grandic 25.10.2022 ( prepojeni z DSL na Ip pripojku od centra )
+#overil         : Petr Janko 25.10.2022
+
+depmod -a
+
+modprobe tun
+
+#lo
+ifconfig lo 127.0.0.1
+ip ro add 127.0.0.0/8 dev lo
+
+#eth0
+ifconfig eth0 109.81.224.101 netmask 255.255.255.0
+echo 0 > /proc/sys/net/ipv6/conf/eth0/autoconf
+ip ro add 0/0 via 109.81.224.1
+
+#pha-r-sitel-ahold
+ip l2tp add tunnel tunnel_id 217 peer_tunnel_id 217 encap udp udp_sport 10217 udp_dport 10217 local 109.81.224.101 remote 213.195.202.151
+ip l2tp add session tunnel_id 217 session_id 217 peer_session_id 217 name l2tpeth0
+ifconfig l2tpeth0 100.124.0.235 netmask 255.255.255.254 mtu 1500
+ip ru add dev l2tpeth0 table 10
+/etc/rc.qos.tunel l2tpeth0 14336
+
+#pha-r-sitel-ahold2
+ip l2tp add tunnel tunnel_id 1217 peer_tunnel_id 1217 encap udp udp_sport 11217 udp_dport 11217 local 109.81.224.101 remote 213.195.202.177
+ip l2tp add session tunnel_id 1217 session_id 1217 peer_session_id 1217 name l2tpeth1
+ifconfig l2tpeth1 100.125.0.235 netmask 255.255.255.254 mtu 1500
+ip ru add dev l2tpeth1 table 10
+/etc/rc.qos.tunel l2tpeth1 14336
+
+
+#eth1 propoj s LTE
+ifconfig eth1 192.168.255.2 netmask 255.255.255.0
+ip ro add 0/0 via 192.168.255.1 table 250
+ip ru add from 192.168.255.2 table 250
+
+#eth2
+ifconfig eth2 0.0.0.0 up mtu 1500
+echo 0 > /proc/sys/net/ipv6/conf/eth2/autoconf
+echo 0 > /proc/sys/net/ipv4/conf/eth2/rp_filter 
+
+#VLAN 6
+vconfig add eth2 6
+ifconfig eth2.6 10.228.147.194 netmask 255.255.255.192
+echo 0 > /proc/sys/net/ipv6/conf/eth2.6/autoconf
+ip ru add dev eth2.6 table 10
+ip ru add from 10.228.147.192/26 table 10
+ip ro add 10.228.147.192/26 dev eth2.6 table 10
+#ab=68 if x=28 || ab=70 if x=30 || ab=71 if x=31
+ip ro add 10.68.147.0/24 via 10.228.147.254 table 10
+ip ro add 10.128.147.0/24 via 10.228.147.254 table 10
+ip ro add 10.228.147.0/24 via 10.228.147.254 table 10
+ip ro add 10.64.147.0/24 via 10.228.147.254 table 10
+#vrrp interface
+ip ru add dev vrrp.1 table 10
+
+#VLAN 12 FREENET
+vconfig add eth2 12
+ifconfig eth2.12 10.72.147.1 netmask 255.255.255.0
+echo 0 > /proc/sys/net/ipv6/conf/eth2.12/autoconf
+echo 1 > /proc/sys/net/ipv4/conf/eth2.12/rp_filter
+ip ro add 10.72.147.0/24 dev eth2.12 table 20
+ip ru add from 10.72.147.0/24 table 20
+ip ru add dev eth2.12 table 20
+iptables -A FORWARD -j DROP -d 10.0.0.0/8 -i eth2.12
+iptables -A FORWARD -j DROP -d 192.168.0.0/16 -i eth2.12
+iptables -A FORWARD -j DROP -d 172.16.0.0/12 -i eth2.12
+iptables -A FORWARD -j DROP -d 169.254.0.0/16 -i eth2.12
+iptables -A FORWARD -j DROP -d 100.64.0.0/10 -i eth2.12
+
+#ov-ahold-jantarova-freenet
+ip l2tp add tunnel tunnel_id 97 peer_tunnel_id 97 encap udp udp_sport 5097 udp_dport 5097 local 109.81.224.101 remote 213.195.202.158
+ip l2tp add session tunnel_id 97 session_id 97 peer_session_id 97 name l2tpeth5
+ifconfig l2tpeth5 100.127.0.193 netmask 255.255.255.254 mtu 1500
+ip ro add 0/0 via 100.127.0.192 table 20 
+ip ru add dev l2tpeth5 table 20
+/etc/rc.qos.tunel l2tpeth5 8192
+
+#eth3 CCTV
+ifconfig eth3 10.34.46.1 netmask 255.255.255.0
+ip ru add dev eth3 table 30
+ip ru add from 10.34.46.0/24 table 30
+ip ro add 10.34.46.0/24 dev eth3 table 30
+
+#ov-ahold-jantarova-cctv  
+ip l2tp add tunnel tunnel_id 98 peer_tunnel_id 98 encap udp udp_sport 5098 udp_dport 5098 local 109.81.224.101 remote 213.195.202.158
+ip l2tp add session tunnel_id 98 session_id 98 peer_session_id 98 name l2tpeth6
+ifconfig l2tpeth6 100.127.0.195 netmask 255.255.255.254 mtu 1500
+ip ro add 0/0 via 100.127.0.194 table 30 
+ip ru add dev l2tpeth6 table 30
+/etc/rc.qos.tunel l2tpeth6 8192
+
+#eth4 Pomocna linka - demontovano, 25.10.2022 predelano na IP pripojku na primaru
+ifconfig eth4 192.168.1.160 netmask 255.255.255.0
+echo 0 > /proc/sys/net/ipv6/conf/eth4/autoconf
+
+
+echo 1 > /proc/sys/net/ipv4/ip_forward
+echo 1 > /proc/sys/net/ipv6/conf/all/forwarding
+
+/etc/init.d/sshd start
+/etc/init.d/xinetd start
+
+/etc/init.d/dhcpd start
+#/etc/init.d/vtund start
+/etc/init.d/bird4 start
+/etc/init.d/snmpd start
+#keepalived (vrrp)
+/etc/init.d/keepalived start
+/etc/init.d/zaloha start
+
+#firewall na sluzby bez tcp_wrapper
+iptables -F SERVIS
+iptables -X SERVIS
+iptables -N SERVIS
+iptables -A INPUT -j SERVIS -p tcp -m multiport --dports 80,81,443
+iptables -A SERVIS -j ACCEPT -s 81.30.225.16/28,81.30.224.128/28,10.0.0.0/8,192.168.0.0/16,172.16.0.0/12,100.64.0.0/10
+iptables -A SERVIS -j DROP
+#omezeni na snmpd
+iptables -A INPUT -j ACCEPT -s 81.30.225.16/28
+iptables -A INPUT -j ACCEPT -s 10.255.12.0/24 -p udp --dport 161
+#iptables -A INPUT -j LOG -m limit --limit 1/m --log-level warning --log-prefix "INPUT_drop "
+iptables -A INPUT -j DROP -p udp --dport 161
+
+#Standardni firewall
+iptables -A FORWARD -j ACCEPT -s 81.30.225.242
+iptables -A FORWARD -j ACCEPT -s 81.30.225.16/28
+iptables -A FORWARD -j ACCEPT -s 81.30.224.128/28
+iptables -A FORWARD -j DROP -d 10.0.0.0/8 -o eth0
+iptables -A FORWARD -j DROP -d 192.168.0.0/16 -o eth0
+iptables -A FORWARD -j DROP -d 172.16.0.0/12 -o eth0
+iptables -A FORWARD -j DROP -d 169.254.0.0/16 -o eth0
+
+
+hostname | logger

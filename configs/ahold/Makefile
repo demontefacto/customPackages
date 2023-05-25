@@ -1,0 +1,86 @@
+#
+# Copyright (C) 2007-2021 OpenWrt.org
+# Copyright (C) 2010 Vertical Communications
+#
+# This is free software, licensed under the GNU General Public License v2.
+# See /LICENSE for more information.
+#
+
+include $(TOPDIR)/rules.mk
+include $(INCLUDE_DIR)/kernel.mk
+include $(INCLUDE_DIR)/version.mk
+include $(INCLUDE_DIR)/feeds.mk
+
+PKG_NAME:=ahold-configs
+PKG_FLAGS:=nonshared
+PKG_RELEASE:=1
+
+PKG_BUILD_DEPENDS:=usign/host ucert/host
+PKG_LICENSE:=GPL-2.0
+
+include $(INCLUDE_DIR)/package.mk
+
+define Package/ahold-configs
+  SECTION:=Configs
+  CATEGORY:=Configuration
+  TITLE:=Configuration for Ahold
+  URL:=http://matrix.ha-vel.cz
+  VERSION:=1
+endef
+
+define Package/base-files/conffiles
+/etc/
+/etc/vtund.conf
+/etc/rc.local
+/etc/rc.vtund
+/etc/bird4.conf
+/etc/dhcpd.conf
+/etc/keepalived
+/etc/keepalived/keepalived.conf
+/etc/zaloha/
+/etc/zaloha/zaloha.sh
+$(call $(TARGET)/conffiles)
+endef
+
+define Package/ahold-configs/description
+ This package contains a base filesystem and system scripts for Ahold.
+endef
+
+define Build/Prepare
+	mkdir -p $(PKG_BUILD_DIR)
+endef
+
+define Build/Compile/Default
+
+endef
+Build/Compile = $(Build/Compile/Default)
+
+ifdef CONFIG_SIGNED_PACKAGES
+  define Build/Configure
+	[ -s $(BUILD_KEY) -a -s $(BUILD_KEY).pub ] || \
+		$(STAGING_DIR_HOST)/bin/usign -G -s $(BUILD_KEY) -p $(BUILD_KEY).pub -c "Local build key"
+
+	[ -s $(BUILD_KEY).ucert ] || \
+		$(STAGING_DIR_HOST)/bin/ucert -I -c $(BUILD_KEY).ucert -p $(BUILD_KEY).pub -s $(BUILD_KEY)
+
+  endef
+
+ifndef CONFIG_BUILDBOT
+  define Package/ahold-configs/install-key
+	mkdir -p $(1)/etc/opkg/keys
+	$(CP) $(BUILD_KEY).pub $(1)/etc/opkg/keys/`$(STAGING_DIR_HOST)/bin/usign -F -p $(BUILD_KEY).pub`
+
+  endef
+endif
+endif
+
+define Package/ahold-configs/install
+	$(CP) ./files/* $(1)/
+	$(Package/ahold-configs/install-key)
+		if [ -f "$$$$conffile" ]; then \
+			grep "$$$${conffile##$(1)}" $(1)/CONTROL/conffiles || \
+				echo "$$$${conffile##$(1)}" >> $(1)/CONTROL/conffiles; \
+		fi \
+	done
+endef
+$(eval $(call BuildPackage,ahold-configs))
