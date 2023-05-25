@@ -1,0 +1,14 @@
+Index: vtun-3.0.3/configure.in
+===================================================================
+--- vtun-3.0.3.orig/configure.in
++++ vtun-3.0.3/configure.in
+@@ -109,9 +109,6 @@ AC_SEARCH_LIBS(gethostbyname, resolv nsl
+ dnl Check for librt
+ AC_SEARCH_LIBS(nanosleep, rt posix4)
+ 
+-dnl Check for setproctitle in libutil
+-AC_SEARCH_LIBS(setproctitle, util bsd, AC_DEFINE(HAVE_SETPROC_TITLE) )
+-
+ if test "$SHAPER" = "yes"; then
+    AC_DEFINE(HAVE_SHAPER)
+ fi
