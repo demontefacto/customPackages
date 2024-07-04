@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=keepalived
-PKG_VERSION:=2.0.19
-PKG_RELEASE:=3
+PKG_VERSION:=2.2.8
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.keepalived.org/software
@@ -225,8 +225,8 @@ define Package/keepalived/install
 		$(1)/etc/keepalived/keepalived.conf
 
 	$(INSTALL_DIR) $(1)/etc/keepalived
-	$(INSTALL_BIN) ./files/vmac.sh \
-		$(1)/etc/keepalived/vmac.sh
+	$(INSTALL_BIN) ./files/notify.sh \
+		$(1)/etc/keepalived/notify.sh
 
 ifneq ($(CONFIG_KEEPALIVED_SNMP_VRRP)$(CONFIG_KEEPALIVED_SNMP_CHECKER)$(CONFIG_KEEPALIVED_SNMP_RFC2)$(CONFIG_KEEPALIVED_SNMP_RFC3),)
 	$(INSTALL_DIR) $(1)/usr/share/snmp/mibs
